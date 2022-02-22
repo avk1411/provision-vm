@@ -8,6 +8,7 @@ Due to time constraints and to define the scope of the assignment, I have made t
 3. Certain requests would lead to different outputs based on the role of the user accessing them. For example, getAllVMs gives a list of VMs for all users if accessed by MASTER role.
 4. Deletion of a user account by a MASTER user is done through userId as parameter. So an "/account/getUsers" endpoint is available to MASTER to access user Ids.
 5. Passwords, though encrpyted, are never displayed in the output of API call.
+6. Unit testing is not included.
 
 Possible Configurations for VM
 * OS: Windows, Linux, Mac
