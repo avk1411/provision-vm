@@ -21,7 +21,6 @@ import org.springframework.web.context.request.WebRequest;
 
 import lombok.extern.log4j.Log4j2;
 
-
 @Log4j2
 @RestController
 @RequestMapping("/account")
@@ -32,40 +31,54 @@ public class AccountController {
 	@Autowired
 	AuthUtils authUtils;
 
-	@GetMapping("/health")
-	public String health(){
-		return "OKAY";
-	}
 	@PostMapping("/signup")
 	public String createNewUser(@RequestBody SignupRequest signupRequest) {
-		int userId = accountService.addNewAppUser(signupRequest);
-		return "New user with id "+ userId +"created.";   
+		if (accountService.isValidSignupRequest(signupRequest)) {
+			try {
+				int userId = accountService.addNewAppUser(signupRequest);
+				return "New user with id " + userId + " created.";
+			} catch (RuntimeException e) {
+				log.error("Failed to create new app user", e);
+				return "Failed to create new app user: " + e.getMessage();
+			}
+		}
+		return "Invalid request body. Please provide a valid email or mobile number and make sure that the password is at least 8 characters long.";
 	}
 
 	@GetMapping("/authenticate")
-	public String getJWTToken(Principal principal){
+	public String getJWTToken(Principal principal) {
 		int userId = accountService.getUserId(principal.getName());
 		String jwt = authUtils.generateToken(userId);
 
 		return jwt;
 	}
-	
+
 	@DeleteMapping()
-	public String deleteUserAccount(WebRequest request){
+	public String deleteUserAccount(WebRequest request) {
 		int userId = authUtils.getUserIdFromRequest(request);
-		accountService.deleteAppUser(userId);
-		return "Deleted user successfully.";
+		try {
+			accountService.deleteAppUser(userId);
+			return "Deleted user successfully.";
+		} catch (RuntimeException e) {
+			return e.getMessage();
+		}
 	}
-	@PreAuthorize("has_role('ROLE_MASTER')")
+	@PreAuthorize("hasRole('MASTER')")
 	@DeleteMapping("/{userId}")
-	public String deleteUserAccount(@PathVariable int userId){
-		log.info("Access granted for MASTER role");
-		accountService.deleteAppUser(userId);
-		return "Deleted user successfully.";
+	public String deleteUserAccount(@PathVariable int userId) {
+			log.info("Access granted for MASTER role");
+			try {
+				accountService.deleteAppUser(userId);
+				return "Deleted user successfully.";
+			} catch (RuntimeException e) {
+				log.error(e);
+				return e.getMessage();
+			}
+		
 	}
-	@PreAuthorize("has_role('ROLE_MASTER')")
+	@PreAuthorize("hasRole('MASTER')")
 	@GetMapping("/getUsers")
-	public List<AppUser> getUsers(){
+	public List<AppUser> getUsers() {
 		log.info("Access granted for MASTER role");
 		return accountService.getAllUsers();
 	}

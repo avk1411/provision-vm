@@ -1,6 +1,7 @@
 package com.ripple.provisionvm.model;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -20,7 +21,9 @@ public class AppUser {
     private int userId;
 
     private String name;
+    @Column(unique = true)
     private String emailId;
+    @Column(unique = true)
     private String mobileNumber;
     private String password;
     private String role;

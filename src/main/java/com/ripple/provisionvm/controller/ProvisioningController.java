@@ -1,5 +1,6 @@
 package com.ripple.provisionvm.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ripple.provisionvm.common.AuthUtils;
@@ -9,7 +10,6 @@ import com.ripple.provisionvm.service.ProvisioningService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,15 +29,20 @@ public class ProvisioningController {
     @Autowired
     AuthUtils authUtils;
 
-    @PostMapping("/{userId}/provision")
-    public String requestNewVM(@PathVariable int userId, @RequestBody ProvisioningRequest provisioningRequest){
-        int vmId = provisioningService.provisionNewVM(userId, provisioningRequest);
-        return "New VM provisioned. VM Id: " + vmId; 
+    @PostMapping("/provision")
+    public String requestNewVM(WebRequest request, @RequestBody ProvisioningRequest provisioningRequest){
+        if (provisioningService.isValidProvisioningRequest(provisioningRequest)) {
+			int userId = authUtils.getUserIdFromRequest(request);
+            int vmId = provisioningService.provisionNewVM(userId, provisioningRequest);
+            return "New VM provisioned. VM Id: " + vmId; 
+		}
+		return "Invalid request body. Please provide accurate provisioning details";
     }
-    
+
     @GetMapping("/getAllVMs")
     public List<ProvisionedVm> getRequestedVMList(WebRequest request){
-        if(request.isUserInRole("ROLE_MASTER")){
+        System.out.println(request.getUserPrincipal());
+        if(request.isUserInRole("MASTER")){
             log.info("Access granted for MASTER role");
             return provisioningService.getAllVMs();
         }
@@ -46,9 +51,13 @@ public class ProvisioningController {
         return result; 
     }
 
-    @GetMapping("/TopVMByMemory")
+    @GetMapping("/getTopVMByMemory")
     public List<ProvisionedVm> getTopVMByMemory(WebRequest request, @RequestParam int n){
-        if(request.isUserInRole("ROLE_MASTER")){
+        if(n <= 0){
+            return new ArrayList<>();
+        }
+        System.out.println(request.getUserPrincipal());
+        if(request.isUserInRole("MASTER")){
             log.info("Access granted for MASTER role");
             return provisioningService.getAllTopVMByMemory(n);
         }
